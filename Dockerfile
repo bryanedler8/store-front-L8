@@ -3,6 +3,16 @@ FROM node:18.20.4-alpine AS builder
 
 WORKDIR /app
 
+# Accept build arguments for API URLs
+ARG VUE_APP_PRODUCT_SERVICE_URL
+ARG VUE_APP_ORDER_SERVICE_URL
+ARG VUE_APP_MAKELINE_SERVICE_URL
+
+# Set environment variables for the build
+ENV VUE_APP_PRODUCT_SERVICE_URL=$VUE_APP_PRODUCT_SERVICE_URL
+ENV VUE_APP_ORDER_SERVICE_URL=$VUE_APP_ORDER_SERVICE_URL
+ENV VUE_APP_MAKELINE_SERVICE_URL=$VUE_APP_MAKELINE_SERVICE_URL
+
 # Copy package.json and package-lock.json to the container
 COPY package*.json ./
 
@@ -22,7 +32,7 @@ FROM nginx:stable-alpine-slim AS runner
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Expose the port the app listens on
-EXPOSE 8080
+EXPOSE 80
 
 # Set the build argument for the app version number
 ARG APP_VERSION=0.1.0
@@ -34,7 +44,6 @@ ENV APP_VERSION=$APP_VERSION
 COPY nginx.conf /etc/nginx/conf.d/nginx.conf.template
 
 # Update the nginx configuration to use the app version number
-# and Copy the nginx configuration template to the container
 RUN envsubst '${APP_VERSION}' < /etc/nginx/conf.d/nginx.conf.template > /etc/nginx/conf.d/default.conf
 
 # Start the app
